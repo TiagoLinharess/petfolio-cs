@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Petfolio.Application.UseCases.Pets.Delete;
+using Petfolio.Application.UseCases.Pets.Read;
 using Petfolio.Application.UseCases.Pets.Register;
 using Petfolio.Application.UseCases.Pets.Update;
 using Petfolio.Communication.Requests;
@@ -11,8 +13,34 @@ namespace Petfolio.API.Controllers
     [ApiController]
     public class PetController : ControllerBase
     {
+        [HttpGet]
+        [ProducesResponseType(typeof(ResponseAllPetJson), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public IActionResult Read()
+        {
+            var useCase = new ReadAllPetsUseCase();
+            var response = useCase.Execute();
+
+            if (response.Pets.Any())
+                return Ok(response);
+
+            return NoContent();
+        }
+
+        [HttpGet]
+        [Route("{id}")]
+        [ProducesResponseType(typeof(ResponsePetJson), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ResponseErrorsJson), StatusCodes.Status404NotFound)]
+        public IActionResult read([FromRoute] int id)
+        {
+            var userCase = new ReadPetByIdUseCase();
+            var response = userCase.Execute(id);
+            return Ok(response);
+        }
+
         [HttpPost]
         [ProducesResponseType(typeof(ResponseRegisterPetJson), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ResponseErrorsJson), StatusCodes.Status400BadRequest)]
         public IActionResult Create([FromBody] RequestPetJson request)
         {
             var useCase = new RegisterPetUseCase();
@@ -24,11 +52,23 @@ namespace Petfolio.API.Controllers
         [HttpPut]
         [Route("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ResponseErrorsJson), StatusCodes.Status400BadRequest)]
         public IActionResult Update([FromRoute] int id, [FromBody] RequestPetJson request)
         {
             var useCase = new UpdatePetUseCase();
             useCase.Execute(id, request);
 
+            return NoContent();
+        }
+
+        [HttpDelete]
+        [Route("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ResponseErrorsJson), StatusCodes.Status404NotFound)]
+        public IActionResult Delete([FromRoute] int id)
+        {
+            var useCase = new DeletePetUseCase();
+            useCase.Execute(id);
             return NoContent();
         }
     }
